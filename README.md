@@ -22,15 +22,15 @@ Edit `.env` locally in your editor:
 
 ```dotenv
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 PORT=3001
 ```
 
 - **GEMINI_API_KEY**: enter your own Google AI API key in the local `.env` file only. Obtain/manage it in [Google AI Studio](https://aistudio.google.com/apikey). Never paste it into chat, source files, browser forms, or a `VITE_*` variable.
-- **GEMINI_MODEL**: defaults to `gemini-2.5-flash` if omitted or blank. Change it to a model available to your key that accepts images and supports JSON structured output. Restart after changing either variable.
+- **GEMINI_MODEL**: defaults to `gemini-3.6-flash` if omitted or blank. Change it to a model available to your key that accepts images and supports JSON structured output. Restart after changing either variable.
 - **PORT**: optional backend port, default `3001`. The Vite development proxy reads the same setting. Run commands from the project root.
 
-Google documents [Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash) as supporting image input and structured output, with a [free tier](https://ai.google.dev/gemini-api/docs/pricing#gemini-2.5-flash). Availability and quotas depend on your account, region, model, and Google's current terms. No paid fallback or automatic model switching is performed.
+Google documents [Gemini 3.6 Flash](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash) as supporting image input and structured output, with a [free tier](https://ai.google.dev/gemini-api/docs/pricing#gemini-3.6-flash). Availability and quotas depend on your account, region, model, and Google's current terms. No paid fallback or automatic model switching is performed.
 
 ```sh
 npm run dev
@@ -46,6 +46,18 @@ npm start
 ```
 
 Open **http://127.0.0.1:3001** (or your configured `PORT`). Both servers bind to loopback. This is a personal local demo, not an authenticated public hosting service.
+
+## Vercel Hobby deployment
+
+Import the repository into Vercel with the **project root** as Root Directory. The included `vercel.json` selects Vite, builds with `npm run build`, and serves `dist/client`. The root `api/` entry points serve `/api/analyze` and `/api/health` through the existing Express application without opening a local listener. Use Node.js 24.x and keep Fluid compute enabled.
+
+Set **GEMINI_API_KEY** and **GEMINI_MODEL=gemini-3.6-flash** in Vercel's server-side environment settings for the environments you intend to use. Do not set `PORT` on Vercel. Redeploy after changing environment variables. Existing model overrides take precedence over the default.
+
+The function duration is configured to 180 seconds, within Hobby's 300-second Fluid compute maximum; the app's Gemini timeout remains 120 seconds. Vercel limits inbound function requests to 4.5 MB. The app allows **3.5 MiB of image data total**, bounds multipart filenames, and reserves room for form overhead. It rejects larger selections rather than compressing them in the browser. See [Vercel Function limits](https://vercel.com/docs/functions/limitations).
+
+Start with a protected preview and verify a real inspection before publishing. Hobby standard deployment protection leaves the production domain public. A public analysis endpoint can consume your Gemini quota; the in-memory concurrency guard applies per function instance, not across deployments. No user-account system has been added. See [deployment protection](https://vercel.com/docs/deployment-protection).
+
+Local tests cover API entry points and payload boundaries. After deployment, verify a real inspection on the hosted URL with your configured key.
 
 ## Using the inspector
 
@@ -79,6 +91,8 @@ shared/
   presets.ts              All eight preset labels and prompts
   schema.ts               Shared Zod schemas and inferred TypeScript types
 tests/                    Backend, SDK transport, schemas, exports, browser tests
+api/                      Vercel API entry points (shared Express app)
+vercel.json               Hosting, duration, and static security headers
 ```
 
 ### VLM pipeline
@@ -89,13 +103,13 @@ tests/                    Backend, SDK transport, schemas, exports, browser test
 
 Each request contains the internal grounding instruction, the selected preset and user context, then numbered text labels and inline images. The implementation uses the installed SDK's typed `models.generateContent`, `responseMimeType`, and `responseJsonSchema` interfaces. See Google's [Generate Content structured-output guide](https://ai.google.dev/gemini-api/docs/generate-content/structured-output).
 
-The JSON schema is derived from the same Zod schema used to validate results, limited to Gemini-supported schema keywords. The backend additionally checks field lengths, visual certainty enums, required sections, and unique, valid image references. Missing or malformed results and blocked/truncated responses fail visibly; missing sections are never filled in automatically. SDK retries are disabled so one click does not silently multiply requests.
+The JSON schema is derived from the same Zod schema used to validate results. Nested array-size constraints are omitted from the provider schema because they caused a live Gemini `INVALID_ARGUMENT` rejection; Zod still enforces all array and string limits on the backend. The backend also checks visual certainty enums, required sections, and unique, valid image references. Missing or malformed results and blocked/truncated responses fail visibly; missing sections are never filled in automatically. SDK retries are disabled so one click does not silently multiply requests.
 
 ### Limits and privacy
 
-- Up to **6 photographs**, **4 MiB per file**, **12 MiB total**, **20 megapixels per image**; instruction limit **2,000 characters**. Central definitions are in `shared/config.ts`.
+- Up to **6 photographs**, **3.5 MiB combined** (and per file), **20 megapixels per image**; instruction limit **2,000 characters**. Central definitions are in `shared/config.ts`.
 - The server verifies actual decoded type against MIME type, fully decodes each image, rejects animated/multi-page content, applies orientation, strips metadata, flattens transparency to white, and converts to JPEG (quality 90), with a maximum **2,048-pixel edge**. Original browser previews are preserved. Resizing can remove small details; upload closer views when needed.
-- Upload buffers stay in server memory, with no filesystem or database storage. Only the configured Gemini API receives image data. There are no analytics, telemetry, external fonts, accounts, or cloud storage.
+- Upload buffers stay in server memory, with no filesystem or database storage. Photographs pass through the application backend (Vercel when deployed) to Gemini. There are no analytics, telemetry, external fonts, accounts, or cloud storage.
 - Gemini requests time out after two minutes; at most two requests are admitted concurrently. The app makes no background analyses.
 - `.env` and `.env.*` are Git-ignored except `.env.example`. Vite receives no key. Responses/logs omit raw provider errors and model HTML is rendered as text. No CORS access is enabled; a required request header blocks cross-origin form submissions.
 - Google processes submitted photographs under its API terms. Free-tier data handling may differ from paid services; review [Google's current terms](https://ai.google.dev/gemini-api/terms) before submitting sensitive site photographs.
@@ -125,4 +139,4 @@ This system performs **AI-assisted visual interpretation**. It is not an enginee
 
 Multiple images are not presumed to share a place, time, project, or sequence. Grounding prompts instruct Gemini to distinguish observation from inference, resist instructions embedded in images, and request useful evidence where uncertain. These instructions and schema validation cannot guarantee factual accuracy or eliminate model overclaims. Have a qualified person verify relevant findings in context.
 
-**Remaining live verification:** add your key locally, restart, and analyze actual construction photographs. Confirm access/quota for the chosen model and review output grounding against the original images. Live inference cannot be verified without your key.
+**Verification status:** the local application completed a live Gemini 3.6 Flash request with a synthetic diagnostic image and returned a validated report; the user also confirmed successful analysis. Repeat a real inspection after deployment to confirm hosted routing, model access, and quota. Review output grounding against the original photographs.

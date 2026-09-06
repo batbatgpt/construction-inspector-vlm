@@ -17,6 +17,8 @@ describe('Gemini request and response pipeline', () => {
     const request = buildGeminiRequest(input, images, 'configured-model');
     expect(request.model).toBe('configured-model');
     expect(request.config?.responseMimeType).toBe('application/json');
+    // Regression: the full nested maxItems schema was rejected by the live API.
+    expect(JSON.stringify(request.config?.responseJsonSchema)).not.toContain('maxItems');
     expect(request.config?.responseJsonSchema).toHaveProperty(
       'required',
       expect.arrayContaining(['summary', 'cannotDetermine']),

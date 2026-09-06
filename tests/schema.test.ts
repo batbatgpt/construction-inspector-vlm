@@ -30,6 +30,17 @@ describe('inspection modes and grounding', () => {
 });
 
 describe('result validation', () => {
+  it('still rejects oversized arrays when provider-side array bounds are omitted', () => {
+    expect(() =>
+      validateResult(
+        {
+          ...resultFixture,
+          observations: Array.from({ length: 31 }, () => resultFixture.observations[0]),
+        },
+        1,
+      ),
+    ).toThrow();
+  });
   it('accepts a complete result without fabricating entries', () => {
     expect(validateResult(resultFixture, 1)).toEqual(resultFixture);
     expect(validateResult({ ...resultFixture, observations: [] }, 1).observations).toEqual([]);

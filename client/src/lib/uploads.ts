@@ -1,4 +1,4 @@
-import { ACCEPTED_MIME_TYPES, LIMITS } from '../../../shared/config';
+import { ACCEPTED_MIME_TYPES, LIMITS, UPLOAD_FILE_LABEL, UPLOAD_TOTAL_LABEL } from '../../../shared/config';
 
 export interface UploadedImage {
   id: string;
@@ -13,10 +13,10 @@ export function checkUploads(existing: File[], incoming: File[]): string | null 
     if (!ACCEPTED_MIME_TYPES.some((mime) => mime === file.type))
       return `${file.name}: choose a JPEG, PNG, or WebP image.`;
     if (file.size === 0 || file.size > LIMITS.maxFileBytes)
-      return `${file.name}: the file is empty or exceeds the 4 MiB limit.`;
+      return `${file.name}: the file is empty or exceeds the ${UPLOAD_FILE_LABEL} limit.`;
   }
   if ([...existing, ...incoming].reduce((total, file) => total + file.size, 0) > LIMITS.maxTotalBytes)
-    return 'The photographs exceed the 12 MiB combined limit. Remove or resize some images.';
+    return `The photographs exceed the ${UPLOAD_TOTAL_LABEL} combined limit. Remove or resize some images.`;
   return null;
 }
 

@@ -15,9 +15,9 @@ describe('upload preflight and report export', () => {
         [],
         [new File([new Uint8Array(LIMITS.maxFileBytes + 1)], 'large.png', { type: 'image/png' })],
       ),
-    ).toContain('4 MiB');
+    ).toContain('3.5 MiB');
     const medium = new File([new Uint8Array(LIMITS.maxFileBytes)], 'medium.png', { type: 'image/png' });
-    expect(checkUploads([medium, medium, medium], [medium])).toContain('12 MiB');
+    expect(checkUploads([medium, medium, medium], [medium])).toContain('3.5 MiB');
   });
   it('exports report context, evidence, all sections, and limitations without prompts', () => {
     const text = reportAsText(reportFixture);

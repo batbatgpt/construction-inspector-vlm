@@ -22,6 +22,15 @@ const post = (app = appForTest()) => request(app).post('/api/analyze').set('X-In
 const file = (buffer: Buffer, mimetype = 'image/png') => ({ buffer, mimetype }) as Express.Multer.File;
 
 describe('API input validation', () => {
+  it('rejects a combined upload one byte above the hosted budget before decoding', async () => {
+    const half = LIMITS.maxTotalBytes / 2;
+    const response = await post()
+      .field('mode', 'general')
+      .attach('images', Buffer.alloc(half), 'one.png')
+      .attach('images', Buffer.alloc(half + 1), 'two.png');
+    expect(response.status).toBe(413);
+    expect(response.body.error.code).toBe('TOTAL_TOO_LARGE');
+  });
   it('accepts exactly six photographs with both form fields', async () => {
     let upload = post().field('mode', 'general').field('instruction', 'Inspect all six views.');
     for (let i = 0; i < LIMITS.maxImages; i++) upload = upload.attach('images', png, `${i}.png`);

@@ -7,7 +7,7 @@ import sharp from 'sharp';
 const origin = 'http://127.0.0.1:3199';
 const browser = await chromium.launch();
 const server = spawn(process.execPath, ['dist/server/index.js'], {
-  env: { ...process.env, PORT: '3199', GEMINI_API_KEY: '', GEMINI_MODEL: 'gemini-2.5-flash' },
+  env: { ...process.env, PORT: '3199', GEMINI_API_KEY: '', GEMINI_MODEL: 'gemini-3.6-flash' },
   stdio: 'pipe',
   windowsHide: true,
 });
@@ -28,7 +28,7 @@ try {
   assert(ready, 'Built backend must start');
   const health = await (await fetch(`${origin}/api/health`)).json();
   assert.equal(health.configured, false);
-  assert.equal(health.model, 'gemini-2.5-flash');
+  assert.equal(health.model, 'gemini-3.6-flash');
   const html = await fetch(origin);
   assert.equal(html.status, 200);
   assert(html.headers.get('content-security-policy')?.includes("connect-src 'self'"));

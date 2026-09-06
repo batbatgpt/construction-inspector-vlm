@@ -12,11 +12,13 @@ import { AppError, mapGeminiError } from './errors.js';
 import type { PreparedImage } from './images.js';
 import { buildTaskInstruction, GROUNDING_INSTRUCTION } from './prompts.js';
 
-// Gemini supports a JSON Schema subset; string length bounds remain enforced by Zod.
+// Nested array bounds caused live Gemini INVALID_ARGUMENT errors for this schema.
+// Keep the provider schema simple; Zod still enforces all size and length bounds.
 const responseJsonSchema = z.toJSONSchema(inspectionResultSchema, {
   override: ({ jsonSchema }) => {
     delete jsonSchema.minLength;
     delete jsonSchema.maxLength;
+    delete jsonSchema.maxItems;
   },
 });
 delete responseJsonSchema.$schema;
@@ -72,7 +74,7 @@ export async function analyzeWithGemini(
     throw new AppError(
       503,
       'MISSING_API_KEY',
-      'Gemini is not configured. Add GEMINI_API_KEY to the server’s local .env file and restart the app. Never enter the key in the browser.',
+      'Gemini is not configured. Set GEMINI_API_KEY in the server’s .env file or Vercel environment settings, then restart or redeploy. Never enter the key in the browser.',
     );
   try {
     const client = new GoogleGenAI({ apiKey });

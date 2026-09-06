@@ -16,7 +16,7 @@ export default defineConfig({
       command: 'node --import tsx server/index.ts',
       url: 'http://127.0.0.1:3001/api/health',
       reuseExistingServer: false,
-      env: { GEMINI_API_KEY: '', GEMINI_MODEL: 'gemini-2.5-flash', PORT: '3001' },
+      env: { GEMINI_API_KEY: '', GEMINI_MODEL: 'gemini-3.6-flash', PORT: '3001' },
       timeout: 30_000,
     },
     {

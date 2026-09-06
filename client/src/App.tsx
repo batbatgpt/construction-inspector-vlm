@@ -174,7 +174,7 @@ export function App() {
           <div className="header-actions">
             <span className="local-label">
               <span />
-              Local workspace
+              Inspection workspace
             </span>
             <button
               type="button"
@@ -190,25 +190,13 @@ export function App() {
         </div>
       </header>
       <main id="inspection-main" className="page-shell">
-        <div className="page-intro">
-          <div>
-            <span className="eyebrow">FROM PHOTOGRAPH TO FINDING</span>
-            <h2>
-              Inspect what you can see.
-              <br className="mobile-break" /> Understand what you can’t.
-            </h2>
-            <p>A focused review of construction photographs, grounded in visible evidence.</p>
-          </div>
-          <span className="session-badge">
-            SESSION ONLY<span>Nothing saved to a database</span>
-          </span>
-        </div>
         {health === 'missing' && (
           <aside className="configuration-note no-print">
             <span className="status-dot" />
             <p>
-              <strong>Gemini setup needed.</strong> Add your API key to the server’s local <code>.env</code>{' '}
-              file and restart. You can prepare your inspection now.
+              <strong>Gemini setup needed.</strong> Configure the server’s API key in <code>.env</code>{' '}
+              locally or Vercel environment settings, then restart or redeploy. You can prepare your
+              inspection now.
             </p>
           </aside>
         )}

@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { ACCEPTED_MIME_TYPES, LIMITS } from '../shared/config.js';
+import { ACCEPTED_MIME_TYPES, LIMITS, UPLOAD_FILE_LABEL, UPLOAD_TOTAL_LABEL } from '../shared/config.js';
 import { AppError } from './errors.js';
 
 export interface PreparedImage {
@@ -20,7 +20,7 @@ export async function prepareImages(files: Express.Multer.File[]): Promise<Prepa
     throw new AppError(
       413,
       'TOTAL_TOO_LARGE',
-      'The photographs exceed the 12 MiB combined limit. Remove or resize some images.',
+      `The photographs exceed the ${UPLOAD_TOTAL_LABEL} combined limit. Remove or resize some images.`,
     );
   }
   const prepared: PreparedImage[] = [];
@@ -28,7 +28,11 @@ export async function prepareImages(files: Express.Multer.File[]): Promise<Prepa
   for (const [index, file] of files.entries()) {
     const label = `Image ${index + 1}`;
     if (!file.buffer.length || file.buffer.length > LIMITS.maxFileBytes)
-      throw new AppError(413, 'FILE_TOO_LARGE', `${label} is empty or exceeds the 4 MiB file limit.`);
+      throw new AppError(
+        413,
+        'FILE_TOO_LARGE',
+        `${label} is empty or exceeds the ${UPLOAD_FILE_LABEL} file limit.`,
+      );
     if (!ACCEPTED_MIME_TYPES.some((mime) => mime === file.mimetype))
       throw new AppError(400, 'UNSUPPORTED_TYPE', `${label}: use a JPEG, PNG, or WebP photograph.`);
     try {
@@ -61,7 +65,7 @@ export async function prepareImages(files: Express.Multer.File[]): Promise<Prepa
         .jpeg({ quality: 90 })
         .toBuffer();
       preparedBytes += buffer.length;
-      if (preparedBytes > LIMITS.maxTotalBytes)
+      if (preparedBytes > LIMITS.maxPreparedBytes)
         throw new AppError(
           413,
           'PREPARED_TOO_LARGE',

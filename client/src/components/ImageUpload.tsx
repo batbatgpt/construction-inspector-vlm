@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { FILE_ACCEPT, LIMITS } from '../../../shared/config';
+import { FILE_ACCEPT, LIMITS, UPLOAD_TOTAL_LABEL } from '../../../shared/config';
 import type { UploadedImage } from '../lib/uploads';
 import { Icon } from './Icon';
 
@@ -68,7 +68,7 @@ export function ImageUpload({ images, disabled, onAdd, onRemove, onClear, onPrev
             event.target.value = '';
           }}
         />
-        <span className="upload-limits">JPEG, PNG, WebP · 4 MiB each · 12 MiB total</span>
+        <span className="upload-limits">JPEG, PNG, WebP · {UPLOAD_TOTAL_LABEL} total</span>
       </div>
       {images.length > 0 && (
         <>

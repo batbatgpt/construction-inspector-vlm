@@ -1,15 +1,19 @@
-import { LIMITS } from '../../../shared/config';
+import { LIMITS, UPLOAD_TOTAL_LABEL } from '../../../shared/config';
 import { reportSchema, type InspectionInput, type InspectionReport } from '../../../shared/schema';
+import { checkUploads } from './uploads';
 
 export async function requestAnalysis(
   input: InspectionInput,
   files: File[],
   signal: AbortSignal,
 ): Promise<InspectionReport> {
+  const issue = checkUploads([], files);
+  if (issue) throw new Error(issue);
   const form = new FormData();
   form.append('mode', input.mode);
   form.append('instruction', input.instruction);
-  for (const file of files) form.append('images', file);
+  // Bound multipart filename overhead independently of user-supplied filenames.
+  for (const [index, file] of files.entries()) form.append('images', file, `image-${index + 1}`);
   let response: Response;
   try {
     response = await fetch('/api/analyze', {
@@ -26,6 +30,12 @@ export async function requestAnalysis(
       cause: error,
     });
   }
+  // Platform errors can arrive as plain text before the Express handler runs.
+  if (response.status === 413)
+    throw new Error(
+      `The upload was too large. Keep photographs within ${UPLOAD_TOTAL_LABEL} combined and try again.`,
+    );
+  if (response.status === 504) throw new Error('The inspection timed out. Try again with fewer photographs.');
   let body: unknown;
   try {
     body = await response.json();

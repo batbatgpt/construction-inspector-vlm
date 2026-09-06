@@ -2,7 +2,7 @@ import express, { type ErrorRequestHandler } from 'express';
 import multer from 'multer';
 import helmet from 'helmet';
 import path from 'node:path';
-import { LIMITS, ACCEPTED_MIME_TYPES } from '../shared/config.js';
+import { LIMITS, ACCEPTED_MIME_TYPES, UPLOAD_FILE_LABEL, UPLOAD_TOTAL_LABEL } from '../shared/config.js';
 import { inspectionInputSchema, validateResult } from '../shared/schema.js';
 import { analyzeWithGemini } from './gemini.js';
 import { getConfig } from './config.js';
@@ -64,6 +64,14 @@ export function createApp(options: { analyzer?: typeof analyzeWithGemini; serveC
         );
       if (!req.is('multipart/form-data'))
         return next(new AppError(415, 'INVALID_REQUEST', 'Send photographs with the inspection form.'));
+      if (Number(req.get('Content-Length')) > LIMITS.maxRequestBytes)
+        return next(
+          new AppError(
+            413,
+            'REQUEST_TOO_LARGE',
+            `The upload request is too large. Keep photographs within ${UPLOAD_TOTAL_LABEL} combined.`,
+          ),
+        );
       if (activeRequests >= LIMITS.maxConcurrentRequests)
         return next(
           new AppError(
@@ -139,7 +147,7 @@ export function createApp(options: { analyzer?: typeof analyzeWithGemini; serveC
         tooLarge ? 413 : 400,
         error.code,
         tooLarge
-          ? 'A photograph exceeds the 4 MiB limit. Resize it and try again.'
+          ? `A photograph exceeds the ${UPLOAD_FILE_LABEL} limit. Resize it and try again.`
           : tooMany
             ? `Use at most ${LIMITS.maxImages} photographs in the images field.`
             : 'The upload form is too large or invalid. Check the instruction and photographs.',
